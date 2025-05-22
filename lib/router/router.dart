@@ -28,11 +28,11 @@ final GoRouter router = GoRouter(
       ),
       GoRoute(
         path: Routes.eventCreatorPage,
-        builder: (context, state) => const InstructorScreen(),
+        builder: (context, state) => const CreatorHomeScreen(),
       ),
       GoRoute(
         path: Routes.ticketBuyerPage,
-        builder: (context, state) => const LearnerScreen(),
+        builder: (context, state) => const BuyerHomeScreen(),
       ),
   ],
 );

@@ -7,8 +7,8 @@ import 'package:uiticket_fe/screens/event/event_detail_screen.dart';
 import 'package:uiticket_fe/screens/event/widgets/event_card.dart';
 import 'dart:math' as math;
 
-class LearnerScreen extends ConsumerWidget {
-  const LearnerScreen({super.key});
+class BuyerHomeScreen extends ConsumerWidget {
+  const BuyerHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
