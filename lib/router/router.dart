@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uiticket_fe/screens/auth/login_screen.dart';
 import 'package:uiticket_fe/screens/admin/admin_screen.dart';
-import 'package:uiticket_fe/screens/event_creator/creator_home_screen.dart';
-import 'package:uiticket_fe/screens/ticket_buyer/buyer_home_screen.dart';
+import 'package:uiticket_fe/screens/home/creator_home_screen.dart';
+import 'package:uiticket_fe/screens/home/buyer_home_screen.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: Routes.login,

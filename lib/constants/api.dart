@@ -7,5 +7,5 @@ class Api {
   static const String resetPassword = "auth/reset-password";
 
   // Event
-  static const String getEvents = "events";
+  static const String events = "events";
 }

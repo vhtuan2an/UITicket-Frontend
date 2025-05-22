@@ -8,3 +8,8 @@ final eventsProvider = FutureProvider<List<Event>>((ref) async {
   final eventRequest = ref.read(eventRequestProvider);
   return await eventRequest.getEvents();
 });
+
+final eventDetailProvider = FutureProvider.family<Event, String>((ref, eventId) async {
+  final eventRequest = ref.read(eventRequestProvider);
+  return eventRequest.getEventById(eventId);
+});

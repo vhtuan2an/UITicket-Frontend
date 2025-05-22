@@ -7,7 +7,7 @@ import 'package:uiticket_fe/models/event.dart';
 class EventRequest extends HttpServices {
   Future<List<Event>> getEvents() async {
     try {
-      final response = await get(url: Api.getEvents);
+      final response = await get(url: Api.events);
       
       if (response.statusCode == 200) {
         // Kiểm tra cấu trúc response
@@ -27,6 +27,21 @@ class EventRequest extends HttpServices {
       }
     } catch (e) {
       print('Error fetching events: $e');
+      rethrow;
+    }
+  }
+
+  Future<Event> getEventById(String id) async {
+    try {
+      final response = await get(url: "${Api.events}/$id");
+      
+      if (response.statusCode == 200) {
+        return Event.fromJson(response.data['data']);
+      } else {
+        throw Exception('Failed to load event details');
+      }
+    } catch (e) {
+      print('Error fetching event details: $e');
       rethrow;
     }
   }

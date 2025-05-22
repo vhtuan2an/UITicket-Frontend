@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uiticket_fe/constants/design.dart';
 import 'package:uiticket_fe/providers/event_provider.dart';
+import 'package:uiticket_fe/screens/event/event_detail_screen.dart';
+import 'package:uiticket_fe/screens/event/widgets/event_card.dart';
 import 'dart:math' as math;
 
 class LearnerScreen extends ConsumerWidget {
@@ -122,7 +124,16 @@ class LearnerScreen extends ConsumerWidget {
                             date: formattedDate,
                             location: event.location,
                             image: eventImage,
-                          ),
+                            eventId: event.id, // Truyền ID sự kiện
+                            onTap: () {
+                              // Điều hướng đến trang chi tiết event
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) => EventDetailScreen(eventId: event.id),
+                              //   ),
+                            },
+                          )
                         );
                       },
                     );
@@ -169,6 +180,15 @@ class LearnerScreen extends ConsumerWidget {
                             date: formattedDate,
                             location: event.location,
                             image: eventImage,
+                            eventId: event.id, // Truyền ID sự kiện
+                            onTap: () {
+                              // Điều hướng đến trang chi tiết event
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) => EventDetailScreen(eventId: event.id),
+                              //
+                            },
                           ),
                         );
                       },
@@ -221,52 +241,5 @@ class CategoryButton extends StatelessWidget {
   }
 }
 
-class EventCard extends StatelessWidget {
-  final String title;
-  final String date;
-  final String location;
-  final String image;
 
-  const EventCard({required this.title, required this.date, required this.location, required this.image});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.network(image, height: 150, width: double.infinity, fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                    const SizedBox(width: 5),
-                    Text(date, style: const TextStyle(color: Colors.grey)),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                    const SizedBox(width: 5),
-                    Text(location, style: const TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+ 
