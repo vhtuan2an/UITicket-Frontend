@@ -127,11 +127,12 @@ class BuyerHomeScreen extends ConsumerWidget {
                             eventId: event.id, // Truyền ID sự kiện
                             onTap: () {
                               // Điều hướng đến trang chi tiết event
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => EventDetailScreen(eventId: event.id),
-                              //   ),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EventDetailScreen(eventId: event.id),
+                                ),
+                              );
                             },
                           )
                         );
@@ -182,12 +183,12 @@ class BuyerHomeScreen extends ConsumerWidget {
                             image: eventImage,
                             eventId: event.id, // Truyền ID sự kiện
                             onTap: () {
-                              // Điều hướng đến trang chi tiết event
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => EventDetailScreen(eventId: event.id),
-                              //
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EventDetailScreen(eventId: event.id),
+                                ),
+                              );
                             },
                           ),
                         );
