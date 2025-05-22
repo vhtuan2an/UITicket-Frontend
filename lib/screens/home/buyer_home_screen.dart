@@ -108,7 +108,7 @@ class BuyerHomeScreen extends ConsumerWidget {
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(), // Cho phép scroll ngang với hiệu ứng bounce
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: events.length, // Hoặc giữ math.min(events.length, 3) nếu chỉ muốn tối đa 3 event
+                      itemCount: math.min(events.length, 3), 
                       itemBuilder: (context, index) {
                         final event = events[index];
                         final eventImage = event.images.isNotEmpty 
@@ -164,7 +164,7 @@ class BuyerHomeScreen extends ConsumerWidget {
                       scrollDirection: Axis.horizontal,  // Thay đổi thành horizontal
                       physics: const BouncingScrollPhysics(),  // Sử dụng BouncingScrollPhysics thay vì NeverScrollableScrollPhysics
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: events.length,
+                      itemCount: math.min(events.length, 3),
                       itemBuilder: (context, index) {
                         final event = events[index];
                         final eventImage = event.images.isNotEmpty 
