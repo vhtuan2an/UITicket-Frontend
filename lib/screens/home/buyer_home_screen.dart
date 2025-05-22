@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uiticket_fe/constants/design.dart';
+import 'package:uiticket_fe/providers/auth_provider.dart'; // Thêm import này
 import 'package:uiticket_fe/providers/event_provider.dart';
 import 'package:uiticket_fe/screens/event/event_detail_screen.dart';
 import 'package:uiticket_fe/screens/event/widgets/event_card.dart';
@@ -13,6 +14,7 @@ class BuyerHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(eventsProvider);
+    final userNameAsync = ref.watch(userNameProvider); // Lấy tên người dùng
     
     return Scaffold(
       appBar: PreferredSize(
@@ -30,8 +32,14 @@ class BuyerHomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   const Text("Hello, John", style: TextStyle(fontSize: 16, color: Colors.white)),
-                   const Text(
+                  // Thay thế text cố định bằng widget động
+                  userNameAsync.when(
+                    loading: () => const Text("Hello, User", style: TextStyle(fontSize: 16, color: Colors.white)),
+                    error: (_, __) => const Text("Hello, User", style: TextStyle(fontSize: 16, color: Colors.white)),
+                    data: (name) => Text("Hello, $name", style: const TextStyle(fontSize: 16, color: Colors.white)),
+                  ),
+                  // Phần còn lại giữ nguyên
+                  const Text(
                     "Find your next event",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
@@ -243,4 +251,3 @@ class CategoryButton extends StatelessWidget {
 }
 
 
- 
