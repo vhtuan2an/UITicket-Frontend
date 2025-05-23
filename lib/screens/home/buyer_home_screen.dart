@@ -209,11 +209,11 @@ class BuyerHomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: kPrimaryColor,
-        child: const Icon(Icons.add, size: 32),
-        onPressed: () {},
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   backgroundColor: kPrimaryColor,
+      //   child: const Icon(Icons.add, size: 32),
+      //   onPressed: () {},
+      // ),
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: kPrimaryColor,
         unselectedItemColor: Colors.grey,
