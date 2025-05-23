@@ -1,34 +1,15 @@
+import 'package:dio/dio.dart';
 import 'package:uiticket_fe/constants/api.dart';
 import 'package:uiticket_fe/services/auth_services.dart';
-import 'package:dio/dio.dart';
 
 class HttpServices {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: Api.baseUrl,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    ),
-  );
+  late Dio _dio;
 
   HttpServices() {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          // Do something before request is sent
-          return handler.next(options); //continue
-        },
-        onResponse: (response, handler) {
-          // Do something with response data
-          return handler.next(response); // continue
-        },
-        onError: (DioException e, handler) {
-          // Do something with response error
-          return handler.next(e); //continue
-        },
-      ),
-    );
+    _dio = Dio();
+    _dio.options.baseUrl = Api.baseUrl;
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
   }
 
   Future<Response> post({
@@ -42,7 +23,7 @@ class HttpServices {
       print('Making request to: ${Api.baseUrl}$url');
       print('Request body: $body');
       response = await _dio.post(
-        url,       
+        url,
         data: body,
         options: Options(
           headers: includeHeader ? await getHeaders() : headers,
@@ -59,24 +40,33 @@ class HttpServices {
     required String url,
     Map<String, dynamic>? body,
     bool includeHeader = true,
-    Map<String, dynamic>? headers,
+    Map<String, dynamic>? customHeaders, // Đổi tên từ headers thành customHeaders
   }) async {
     Response response;
     try {
-      print('Making request to: ${Api.baseUrl}$url');
-      print('Request body: $body');
+      final token = await AuthServices.getAuthBearerToken();
+      print('Making GET request to: ${_dio.options.baseUrl}$url');
+      print('User token: $token');
+
+      final headers = <String, dynamic>{ // Biến local này sẽ không bị conflict
+        'Content-Type': 'application/json',
+      };
+
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
       response = await _dio.get(
         url,
         queryParameters: body,
-        options: Options(
-          headers: includeHeader ? await getHeaders() : headers,
-        ),
+        options: Options(headers: includeHeader ? headers : customHeaders),
       );
-      print('Response data: ${response.data}');
-    } on DioException catch (e) {
-      response = _handleError(e);
+
+      return response;
+    } catch (e) {
+      print('HTTP GET error: $e');
+      rethrow;
     }
-    return response;
   }
 
   // Get headers

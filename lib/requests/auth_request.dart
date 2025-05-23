@@ -15,10 +15,10 @@ class AuthRequest extends HttpServices {
         },
       );
       
-      if (response.statusCode == null) {
-        throw Exception('No response from server');
-      }
-      
+      // if (response.statusCode == null) {
+      //   throw Exception('No response from server');
+      // }
+      print('Respond: ${response}');
       print('Login response status: ${response.statusCode}');
       print('Login response data: ${response.data}');
       

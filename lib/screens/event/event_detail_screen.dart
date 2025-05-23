@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uiticket_fe/constants/design.dart';
 import 'package:uiticket_fe/providers/event_provider.dart';
 
@@ -10,7 +11,6 @@ class EventDetailScreen extends ConsumerWidget {
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Sử dụng provider để fetch thông tin chi tiết của event theo ID
     final eventDetailAsync = ref.watch(eventDetailProvider(eventId));
     
     return Scaffold(
@@ -21,30 +21,308 @@ class EventDetailScreen extends ConsumerWidget {
       ),
       body: eventDetailAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: ${error.toString()}')),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error: ${error.toString()}'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(eventDetailProvider(eventId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
         data: (event) => SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hiển thị thông tin chi tiết của event
-              // ...
+              // Event Image
+              Container(
+                height: 250,
+                width: double.infinity,
+                child: event.images.isNotEmpty 
+                  ? Image.network(
+                      event.images.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[300],
+                          child: const Icon(Icons.broken_image, size: 50),
+                        );
+                      },
+                    )
+                  : Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.event, size: 50),
+                    ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Event Name
+                    Text(
+                      event.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Event Date
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: kPrimaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('EEEE, MMM dd, yyyy - HH:mm').format(event.date),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Event Location
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: kPrimaryColor),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            event.location,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Event Price
+                    Row(
+                      children: [
+                        const Icon(Icons.attach_money, color: kPrimaryColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          event.price == 0 ? 'Free' : '\$${event.price.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: kPrimaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Tickets Info
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text(
+                                '${event.ticketsSold}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text('Sold'),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                '${event.maxAttendees - event.ticketsSold}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text('Available'),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                '${event.maxAttendees}',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text('Total'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Creator Information
+                    const Text(
+                      'Event Creator',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: kPrimaryColor,
+                            child: Text(
+                              event.createdBy.isNotEmpty 
+                                ? event.createdBy[0].toUpperCase() 
+                                : 'U',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  event.createdBy.isNotEmpty 
+                                    ? event.createdBy 
+                                    : 'Unknown Creator',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const Text(
+                                  'Event Organizer',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              // Contact creator functionality
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Contact feature coming soon!'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.message, color: kPrimaryColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Event Description
+                    if (event.description.isNotEmpty) ...[
+                      const Text(
+                        'About This Event',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        event.description,
+                        style: const TextStyle(fontSize: 16, height: 1.5),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    
+                    // Event Status
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: event.status == 'active' 
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Status: ${event.status.toUpperCase()}',
+                        style: TextStyle(
+                          color: event.status == 'active' 
+                            ? Colors.green 
+                            : Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 80), // Space for bottom button
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kPrimaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+      bottomNavigationBar: eventDetailAsync.when(
+        loading: () => null,
+        error: (_, __) => null,
+        data: (event) => BottomAppBar(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: event.maxAttendees > event.ticketsSold
+                ? () {
+                    // Navigate to booking screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Booking feature coming soon!'),
+                      ),
+                    );
+                  }
+                : null, // Disable button if sold out
+              child: Text(
+                event.maxAttendees > event.ticketsSold
+                  ? 'Book Tickets - ${event.price == 0 ? 'Free' : '\$${event.price.toStringAsFixed(2)}'}'
+                  : 'Sold Out',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            onPressed: () {
-              // Chuyển đến màn hình đặt vé
-            },
-            child: const Text('Book Tickets'),
           ),
         ),
       ),

@@ -6,6 +6,9 @@ class Api {
   static const String register = "auth/register";
   static const String resetPassword = "auth/reset-password";
 
+  // User
+  static const String users = "users";
+
   // Event
   static const String events = "events";
 }
