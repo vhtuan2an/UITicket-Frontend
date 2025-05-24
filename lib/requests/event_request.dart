@@ -38,7 +38,7 @@ class EventRequest extends HttpServices {
       if (response.statusCode == 200) {
         return Event.fromJson(response.data['data']);
       } else {
-        throw Exception('Failed to load event details');
+        throw Exception('Failed to load event details');  
       }
     } catch (e) {
       print('Error fetching event details: $e');

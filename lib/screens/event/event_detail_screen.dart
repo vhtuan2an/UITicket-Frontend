@@ -3,11 +3,153 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uiticket_fe/constants/design.dart';
 import 'package:uiticket_fe/providers/event_provider.dart';
+import 'package:uiticket_fe/providers/user_provider.dart'; // Thêm import này
 
 class EventDetailScreen extends ConsumerWidget {
   final String eventId;
   
   const EventDetailScreen({super.key, required this.eventId});
+
+  // Widget để hiển thị thông tin creator
+  Widget _buildCreatorInfo(BuildContext context, WidgetRef ref, String createdById) {
+    if (createdById.isEmpty) {
+      return _buildDefaultCreatorInfo(context);
+    }
+
+    final creatorAsync = ref.watch(userInfoProvider(createdById));
+    
+    return creatorAsync.when(
+      loading: () => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text('Loading creator info...'),
+          ],
+        ),
+      ),
+      error: (error, stack) {
+        print('Error loading creator: $error');
+        return _buildDefaultCreatorInfo(context);
+      },
+      data: (creator) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: kPrimaryColor,
+              child: Text(
+                creator.name.isNotEmpty 
+                  ? creator.name[0].toUpperCase() 
+                  : 'U',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    creator.name.isNotEmpty 
+                      ? creator.name 
+                      : 'Unknown Creator',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    'Event Organizer • ${creator.role.replaceAll('_', ' ').toUpperCase()}',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Contact ${creator.name}'),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.message, color: kPrimaryColor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultCreatorInfo(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: Colors.grey,
+            child: const Text(
+              'U',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Unknown Creator',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  'Event Organizer',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: null,
+            icon: const Icon(Icons.message, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,7 +314,7 @@ class EventDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Creator Information
+                    // Creator Information - SỬA ĐỔI CHÍNH Ở ĐÂY
                     const Text(
                       'Event Creator',
                       style: TextStyle(
@@ -181,64 +323,7 @@ class EventDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: kPrimaryColor,
-                            child: Text(
-                              event.createdBy.isNotEmpty 
-                                ? event.createdBy[0].toUpperCase() 
-                                : 'U',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  event.createdBy.isNotEmpty 
-                                    ? event.createdBy 
-                                    : 'Unknown Creator',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const Text(
-                                  'Event Organizer',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              // Contact creator functionality
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Contact feature coming soon!'),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.message, color: kPrimaryColor),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildCreatorInfo(context, ref, event.createdBy), // Sử dụng method mới
                     const SizedBox(height: 20),
                     
                     // Event Description
