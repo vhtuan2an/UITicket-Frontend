@@ -376,37 +376,84 @@ class EventDetailScreen extends ConsumerWidget {
       bottomNavigationBar: eventDetailAsync.when(
         loading: () => null,
         error: (_, __) => null,
-        data: (event) => BottomAppBar(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: kPrimaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+        data: (event) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(0, -2),
               ),
-              onPressed: event.maxAttendees > event.ticketsSold
-                ? () {
-                    // Navigate to booking screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Booking feature coming soon!'),
+            ],
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Hiển thị giá và trạng thái trên dòng riêng
+                if (event.maxAttendees > event.ticketsSold) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Price:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
                       ),
-                    );
-                  }
-                : null, // Disable button if sold out
-              child: Text(
-                event.maxAttendees > event.ticketsSold
-                  ? 'Book Tickets - ${event.price == 0 ? 'Free' : '\$${event.price.toStringAsFixed(2)}'}'
-                  : 'Sold Out',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                      Text(
+                        event.price == 0 ? 'Free' : '\$${event.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: kPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                
+                // Nút booking với text ngắn gọn hơn
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: event.maxAttendees > event.ticketsSold 
+                        ? kPrimaryColor 
+                        : Colors.grey,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    onPressed: event.maxAttendees > event.ticketsSold
+                      ? () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Booking feature coming soon!'),
+                            ),
+                          );
+                        }
+                      : null,
+                    child: Text(
+                      event.maxAttendees > event.ticketsSold
+                        ? 'Book Now'  // Text ngắn gọn hơn
+                        : 'Sold Out',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
