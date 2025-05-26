@@ -3,12 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uiticket_fe/constants/design.dart';
 import 'package:uiticket_fe/providers/event_provider.dart';
-import 'package:uiticket_fe/providers/user_provider.dart'; // Thêm import này
+import 'package:uiticket_fe/providers/user_provider.dart';
+import 'package:uiticket_fe/providers/ticket_provider.dart';
+import 'package:uiticket_fe/models/ticket.dart';
+import 'package:uiticket_fe/models/event.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:external_app_launcher/external_app_launcher.dart';
 
-class EventDetailScreen extends ConsumerWidget {
+class EventDetailScreen extends ConsumerStatefulWidget {
   final String eventId;
   
   const EventDetailScreen({super.key, required this.eventId});
+
+  @override
+  ConsumerState<EventDetailScreen> createState() => _EventDetailScreenState();
+}
+
+class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
+  bool _isBooking = false;
 
   // Widget để hiển thị thông tin creator
   Widget _buildCreatorInfo(BuildContext context, WidgetRef ref, String createdById) {
@@ -150,10 +162,204 @@ class EventDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _bookTicket(String eventId) async {
+    if (_isBooking) return;
+
+    setState(() {
+      _isBooking = true;
+    });
+
+    try {
+      final ticketRequest = ref.read(ticketRequestProvider);
+      final ticket = await ticketRequest.bookTicket(eventId);
+      
+      print('Ticket booked successfully: ${ticket.toString()}');
+      
+      // Kiểm tra xem có payment URL không
+      if (ticket.paymentData.isNotEmpty && 
+          ticket.paymentData.containsKey('deeplink')) {
+        final deeplink = ticket.paymentData['deeplink'] as String;
+        
+        // Hiển thị dialog xác nhận trước khi chuyển đến MoMo
+        if (mounted) {
+          _showPaymentDialog(ticket, deeplink);
+        }
+      } else {
+        // Nếu không có payment data, hiển thị thông báo thành công
+        if (mounted) {
+          _showBookingSuccessDialog(ticket);
+        }
+      }
+      
+      // Refresh event data để cập nhật số lượng vé
+      ref.invalidate(eventDetailProvider(eventId));
+      
+    } catch (e) {
+      print('Error booking ticket: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to book ticket: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBooking = false;
+        });
+      }
+    }
+  }
+
+  void _showPaymentDialog(Ticket ticket, String deeplink) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Booking Successful!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Booking Code: ${ticket.bookingCode}'),
+              const SizedBox(height: 8),
+              Text('Status: ${ticket.statusDisplayText}'),
+              const SizedBox(height: 8),
+              Text('Payment: ${ticket.paymentStatusDisplayText}'),
+              const SizedBox(height: 16),
+              if (ticket.paymentData.containsKey('amount'))
+                Text('Amount: ${NumberFormat.currency(symbol: '\$').format((ticket.paymentData['amount'] as num) / 100)}'),
+              const SizedBox(height: 16),
+              const Text('Tap "Pay Now" to complete payment via MoMo.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Later'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _launchMoMoPayment(deeplink);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+              ),
+              child: const Text(
+                'Pay Now',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showBookingSuccessDialog(Ticket ticket) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Booking Successful!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Booking Code: ${ticket.bookingCode}'),
+              const SizedBox(height: 8),
+              Text('Status: ${ticket.statusDisplayText}'),
+              const SizedBox(height: 8),
+              const Text('Your ticket has been booked successfully!'),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+              ),
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _launchMoMoPayment(String deeplink) async {
+    try {
+      print('Attempting to launch: $deeplink');
+      
+      final uri = Uri.parse(deeplink);
+      
+      // Thử launch với các mode khác nhau
+      bool launched = false;
+      
+      // Thử với externalApplication mode
+      try {
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        print('Launch result: $launched');
+      } catch (e) {
+        print('ExternalApplication mode failed: $e');
+      }
+      
+      // Nếu không thành công, thử với platformDefault
+      if (!launched) {
+        try {
+          launched = await launchUrl(
+            uri,
+            mode: LaunchMode.platformDefault,
+          );
+          print('PlatformDefault launch result: $launched');
+        } catch (e) {
+          print('PlatformDefault mode failed: $e');
+        }
+      }
+      
+      if (!launched) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to open MoMo app. Please ensure MoMo is installed.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+      
+    } catch (e) {
+      print('Error launching MoMo: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening payment: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
   
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final eventDetailAsync = ref.watch(eventDetailProvider(eventId));
+  Widget build(BuildContext context) {
+    final ref = this.ref; // Get ref from ConsumerState
+    final eventDetailAsync = ref.watch(eventDetailProvider(widget.eventId));
     
     return Scaffold(
       appBar: AppBar(
@@ -172,7 +378,7 @@ class EventDetailScreen extends ConsumerWidget {
               Text('Error: ${error.toString()}'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.invalidate(eventDetailProvider(eventId)),
+                onPressed: () => ref.invalidate(eventDetailProvider(widget.eventId)),
                 child: const Text('Retry'),
               ),
             ],
@@ -314,7 +520,7 @@ class EventDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Creator Information - SỬA ĐỔI CHÍNH Ở ĐÂY
+                    // Creator Information
                     const Text(
                       'Event Creator',
                       style: TextStyle(
@@ -323,7 +529,7 @@ class EventDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildCreatorInfo(context, ref, event.createdBy), // Sử dụng method mới
+                    _buildCreatorInfo(context, ref, event.createdBy),
                     const SizedBox(height: 20),
                     
                     // Event Description
@@ -365,7 +571,7 @@ class EventDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 80), // Space for bottom button
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
@@ -393,7 +599,6 @@ class EventDetailScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Hiển thị giá và trạng thái trên dòng riêng
                 if (event.maxAttendees > event.ticketsSold) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -418,7 +623,6 @@ class EventDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                 ],
                 
-                // Nút booking với text ngắn gọn hơn
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -433,24 +637,27 @@ class EventDetailScreen extends ConsumerWidget {
                       ),
                       elevation: 2,
                     ),
-                    onPressed: event.maxAttendees > event.ticketsSold
-                      ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Booking feature coming soon!'),
-                            ),
-                          );
-                        }
+                    onPressed: (event.maxAttendees > event.ticketsSold && !_isBooking)
+                      ? () => _bookTicket(widget.eventId)
                       : null,
-                    child: Text(
-                      event.maxAttendees > event.ticketsSold
-                        ? 'Book Now'  // Text ngắn gọn hơn
-                        : 'Sold Out',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isBooking
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          event.maxAttendees > event.ticketsSold
+                            ? 'Book Now'
+                            : 'Sold Out',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                   ),
                 ),
               ],

@@ -11,4 +11,8 @@ class Api {
 
   // Event
   static const String events = "events";
+
+  // Ticket
+  static const String tickets = "tickets";
+  static const String bookTicket = "tickets/book";
 }
